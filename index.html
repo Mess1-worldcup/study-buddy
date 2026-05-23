@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Study Buddy — Your AI Tutor</title>
+<style>
+  /* =========================================================
+     STUDY BUDDY - AI TUTOR
+     One file = the whole app. You can read and change anything!
+     - Colors are set with "CSS variables" (the --names below).
+     - The AI runs INSIDE your browser (free + private).
+     ========================================================= */
+
+  :root {
+    --accent: #2563eb;        /* changes color based on the subject */
+    --accent-soft: #dbeafe;
+    --bg: #f4f6fb;
+    --panel: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --radius: 16px;
+    --shadow: 0 6px 20px rgba(0,0,0,0.06);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Top header ---------- */
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  header h1 {
+    font-size: 20px;
+    margin: 0;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .logo-dot {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .status {
+    font-size: 13px;
+    color: var(--muted);
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .status .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #cbd5e1; display: inline-block;
+  }
+  .status.ready .dot { background: #22c55e; }
+  .status.loading .dot { background: #f59e0b; }
+  .status.error .dot { background: #ef4444; }
+
+  select, button, textarea, input {
+    font-family: inherit;
+  }
+  select {
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: #fff;
+    font-size: 13px;
+  }
+
+  /* ---------- Subject tabs ---------- */
+  .subjects {
+    display: flex;
+    gap: 8px;
+    padding: 10px 18px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .subject-btn {
+    border: 2px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all .15s;
+  }
+  .subject-btn:hover { border-color: var(--accent); }
+  .subject-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  /* ---------- Main layout ---------- */
+  main {
+    flex: 1;
+    display: flex;
+    gap: 14px;
+    padding: 14px 18px;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* Chat column */
+  .chat-col {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    min-width: 0;
+  }
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .bubble {
+    max-width: 85%;
+    padding: 11px 14px;
+    border-radius: 14px;
+    line-height: 1.5;
+    font-size: 15px;
+    white-space: pre-wrap;     /* keeps line breaks the AI writes */
+    word-wrap: break-word;
+  }
+  .bubble.user {
+    align-self: flex-end;
+    background: var(--accent);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .bubble.bot {
+    align-self: flex-start;
+    background: #f1f5f9;
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+  }
+  .bubble.system-note {
+    align-self: center;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    text-align: center;
+    max-width: 95%;
+  }
+
+  /* Input row */
+  .composer {
+    border-top: 1px solid var(--border);
+    padding: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+  .composer textarea {
+    flex: 1;
+    resize: none;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 15px;
+    max-height: 140px;
+    min-height: 44px;
+    line-height: 1.4;
+  }
+  .composer textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 0 18px;
+    height: 44px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-ghost {
+    background: #fff;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0 14px;
+    height: 44px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  /* Right side column */
+  .side-col {
+    width: 320px;
+    flex: 0 0 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 0;
+  }
+  .panel {
+    background: var(--panel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .panel h2 {
+    font-size: 14px;
+    margin: 0;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel .body { padding: 12px 14px; overflow-y: auto; }
+
+  /* Saved chats */
+  .chats-panel { flex: 1 1 40%; min-height: 120px; }
+  .chat-item {
+    padding: 9px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+  }
+  .chat-item:hover { background: var(--bg); }
+  .chat-item.active { background: var(--accent-soft); }
+  .chat-item .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chat-item .tag {
+    font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 6px;
+    background: #fff; border: 1px solid var(--border); color: var(--muted);
+  }
+  .chat-item .del { color: var(--muted); border: none; background: none; cursor: pointer; font-size: 15px; }
+  .chat-item .del:hover { color: #ef4444; }
+
+  /* Notepad */
+  .notepad-panel { flex: 1 1 60%; min-height: 160px; }
+  .notepad-panel .body { padding: 0; flex: 1; display: flex; }
+  #notepad {
+    flex: 1;
+    width: 100%;
+    border: none;
+    resize: none;
+    padding: 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    font-family: inherit;
+  }
+  #notepad:focus { outline: none; }
+  .saved-hint { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+  /* Loading bar */
+  #loadWrap {
+    padding: 10px 18px;
+    background: #fff7ed;
+    border-bottom: 1px solid #fed7aa;
+    font-size: 13px;
+    color: #9a3412;
+    display: none;
+  }
+  #loadWrap.show { display: block; }
+  .bar { height: 8px; background: #fde68a; border-radius: 999px; overflow: hidden; margin-top: 6px; }
+  .bar > div { height: 100%; width: 0%; background: #f59e0b; transition: width .2s; }
+
+  /* WebGPU warning screen */
+  #gpuWarn {
+    display: none;
+    margin: 40px auto;
+    max-width: 560px;
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 28px;
+    line-height: 1.6;
+  }
+  #gpuWarn h2 { color: #ef4444; margin-top: 0; }
+  #gpuWarn code { background: #f1f5f9; padding: 2px 6px; border-radius: 6px; }
+
+  .empty {
+    color: var(--muted);
+    text-align: center;
+    margin: auto;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* Make it work on phones / small screens */
+  @media (max-width: 820px) {
+    main { flex-direction: column; overflow-y: auto; }
+    .side-col { width: 100%; flex: none; }
+    .chat-col { min-height: 60vh; }
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <h1><span class="logo-dot"></span>Study Buddy</h1>
+    <div style="font-size:13px;color:var(--muted)">Your private AI tutor</div>
+    <div class="status" id="status">
+      <select id="modelPicker" title="Pick how smart vs. fast the AI is"></select>
+      <span class="dot"></span><span id="statusText">Getting ready…</span>
+    </div>
+  </header>
+
+  <!-- Subject tabs -->
+  <div class="subjects" id="subjects"></div>
+
+  <!-- Model download progress -->
+  <div id="loadWrap">
+    <span id="loadText">Downloading the AI brain (this only happens once)…</span>
+    <div class="bar"><div id="loadBar"></div></div>
+    <div style="font-size:12px;margin-top:6px;">Too slow or won't finish? Pick a faster brain from the menu at the top right, then ask again.</div>
+  </div>
+
+  <main>
+    <!-- WebGPU not supported message -->
+    <div id="gpuWarn">
+      <h2>Almost there!</h2>
+      <p>This tutor uses a feature called <strong>WebGPU</strong> to run the AI for free, right on your computer.</p>
+      <p>Your browser doesn't support it yet. To fix this:</p>
+      <p>1. Use <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> (the newest version).<br>
+         2. Make sure you're on a laptop or desktop computer (not an old phone).<br>
+         3. If you're already using Chrome, try updating it.</p>
+      <p>You can check if WebGPU works by visiting <code>chrome://gpu</code> in Chrome.</p>
+    </div>
+
+    <!-- Chat -->
+    <div class="chat-col" id="chatCol">
+      <div class="messages" id="messages">
+        <div class="empty" id="emptyMsg">
+          Pick a subject above, then ask me anything!<br>
+          I'm here to help you <strong>understand</strong>, not just give answers.
+        </div>
+      </div>
+      <div class="composer">
+        <textarea id="input" placeholder="Type your question here…" rows="1"></textarea>
+        <button class="btn-ghost" id="stopBtn" style="display:none">Stop</button>
+        <button class="btn-primary" id="sendBtn">Ask</button>
+      </div>
+    </div>
+
+    <!-- Side column: saved chats + notepad -->
+    <div class="side-col">
+      <div class="panel chats-panel">
+        <h2>My Chats
+          <button class="btn-ghost" id="newChatBtn" style="height:28px;padding:0 10px;font-size:12px">+ New</button>
+        </h2>
+        <div class="body" id="chatList"></div>
+      </div>
+
+      <div class="panel notepad-panel">
+        <h2>Notepad <span class="saved-hint" id="noteSaved">saved</span></h2>
+        <div class="body">
+          <textarea id="notepad" placeholder="Write things you want to remember here…
+(It saves automatically!)"></textarea>
+        </div>
+      </div>
+    </div>
+  </main>
+
+<script type="module">
+  // We load the WebLLM AI library only WHEN NEEDED (the first time you ask a
+  // question). This way the buttons and notepad always appear right away,
+  // even before the AI has finished loading.
+  let webllm = null;
+  async function loadWebLLM() {
+    if (webllm) return webllm;
+    webllm = await import("https://esm.run/@mlc-ai/web-llm");
+    return webllm;
+  }
+
+  /* =======================================================
+     1) SUBJECTS  — each one gives the AI a different "job"
+     ======================================================= */
+  // Shared rules added to EVERY subject. Clear, simple instructions like these
+  // make a big difference for a small AI model.
+  const BASE_RULES =
+    " RULES: Talk to an 11-12 year old 6th grader. Use simple, everyday words and a warm, encouraging tone. " +
+    "Keep answers SHORT — usually 2 to 5 sentences, or a few short numbered steps. Do not write long walls of text. " +
+    "Teach one small step at a time and use a real-life example when it helps. " +
+    "When it is homework or a problem to solve, do NOT just give the final answer — show the first step, then ask one short question so the student tries the next step. " +
+    "If the student seems confused or says 'I don't get it', slow down and explain it an easier way with a simple example. " +
+    "Always praise effort. Stay safe and age-appropriate. If a question is not about this subject, gently steer back, and if it is unsafe or not school-related, kindly say you can only help with schoolwork.";
+
+  const SUBJECTS = {
+    math: {
+      name: "Math",
+      color: "#2563eb", soft: "#dbeafe",
+      prompt: "You are Study Buddy, a friendly, patient MATH tutor. " +
+        "Help with arithmetic, fractions, decimals, ratios, basic algebra, geometry, and word problems. " +
+        "Show your steps clearly, line by line, and check the student's thinking with a quick question." + BASE_RULES
+    },
+    ela: {
+      name: "ELA (Reading & Writing)",
+      color: "#7c3aed", soft: "#ede9fe",
+      prompt: "You are Study Buddy, a friendly ENGLISH LANGUAGE ARTS tutor. " +
+        "Help with reading comprehension, writing, grammar, spelling, and vocabulary. " +
+        "For writing, give one or two helpful tips and ask a guiding question instead of writing it for the student — help them write it themselves." + BASE_RULES
+    },
+    science: {
+      name: "Science",
+      color: "#059669", soft: "#d1fae5",
+      prompt: "You are Study Buddy, a fun, curious SCIENCE tutor. " +
+        "Help with life science, earth science, and physical science. " +
+        "Explain ideas with a simple example or comparison, and sometimes add a short fun fact. Encourage the student to ask 'why' and 'how'. " +
+        "Never give instructions for dangerous experiments." + BASE_RULES
+    },
+    social: {
+      name: "Social Studies",
+      color: "#ea580c", soft: "#ffedd5",
+      prompt: "You are Study Buddy, a friendly SOCIAL STUDIES tutor. " +
+        "Help with history, geography, civics, and cultures using short, interesting explanations or mini-stories. " +
+        "On topics where people disagree, stay balanced and fair and explain the different viewpoints." + BASE_RULES
+    }
+  };
+
+  /* =======================================================
+     2) SAVING  — everything is stored in this browser only
+        (each friend has their own private chats and notes)
+     ======================================================= */
+  const KEYS = {
+    chats: "studybuddy.chats",
+    notepad: "studybuddy.notepad",
+    model: "studybuddy.model",
+    subject: "studybuddy.subject"
+  };
+  const load = (k, fallback) => {
+    try { const v = localStorage.getItem(k); return v === null ? fallback : JSON.parse(v); }
+    catch { return fallback; }
+  };
+  const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+
+  let chats = load(KEYS.chats, []);          // array of {id, subject, title, messages:[], updated}
+  let currentId = null;                       // which chat is open
+  let currentSubject = load(KEYS.subject, "math");
+
+  /* =======================================================
+     3) GRAB PAGE ELEMENTS
+     ======================================================= */
+  const $ = (id) => document.getElementById(id);
+  const messagesEl = $("messages");
+  const inputEl = $("input");
+  const sendBtn = $("sendBtn");
+  const stopBtn = $("stopBtn");
+  const chatListEl = $("chatList");
+  const notepadEl = $("notepad");
+  const statusEl = $("status");
+  const statusText = $("statusText");
+  const subjectsEl = $("subjects");
+  const modelPicker = $("modelPicker");
+
+  /* =======================================================
+     4) AI ENGINE SETUP
+     ======================================================= */
+  let engine = null;
+  let loadedModel = null;     // which model is currently in memory
+  let generating = false;
+
+  // Pick a few good, small models from the library's real list.
+  function setupModelPicker() {
+    // Known WebLLM model IDs. The FIRST one is the default (smarter).
+    // Smaller = faster but simpler; bigger = smarter but needs a stronger computer.
+    const models = [
+      { id: "Llama-3.2-3B-Instruct-q4f16_1-MLC", label: "Smart (Llama 3.2 3B) — recommended" },
+      { id: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", label: "Balanced (Qwen 2.5 1.5B)" },
+      { id: "Llama-3.2-1B-Instruct-q4f32_1-MLC", label: "Fastest (Llama 3.2 1B) — for slower computers" },
+      { id: "Phi-3.5-mini-instruct-q4f16_1-MLC", label: "Detailed (Phi 3.5 Mini)" }
+    ];
+    modelPicker.innerHTML = "";
+    for (const m of models) {
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = m.label;
+      modelPicker.appendChild(opt);
+    }
+    const saved = load(KEYS.model, null);
+    if (saved && [...modelPicker.options].some(o => o.value === saved)) {
+      modelPicker.value = saved;
+    }
+  }
+
+  function setStatus(state, text) {
+    statusEl.className = "status " + state;
+    statusText.textContent = text;
+  }
+
+  // Load (download + start) the chosen model. Cached after the first time.
+  async function ensureEngine() {
+    const wantModel = modelPicker.value;
+    if (engine && loadedModel === wantModel) return;
+
+    await loadWebLLM();   // download the AI library now (only happens once)
+
+    if (!engine) {
+      // initProgressCallback updates the download bar (documented MLCEngineConfig field)
+      const initProgressCallback = (report) => {
+        $("loadWrap").classList.add("show");
+        const pct = Math.round((report.progress || 0) * 100);
+        $("loadBar").style.width = pct + "%";
+        $("loadText").textContent = report.text || ("Loading the AI brain… " + pct + "%");
+        setStatus("loading", "Loading… " + pct + "%");
+      };
+      engine = new webllm.MLCEngine({ initProgressCallback });
+    }
+    setStatus("loading", "Loading the AI…");
+    await engine.reload(wantModel);
+    loadedModel = wantModel;
+    save(KEYS.model, wantModel);
+    $("loadWrap").classList.remove("show");
+    setStatus("ready", "Ready");
+  }
+
+  /* =======================================================
+     5) SUBJECT TABS
+     ======================================================= */
+  function applySubjectColor(subjKey) {
+    const s = SUBJECTS[subjKey];
+    document.documentElement.style.setProperty("--accent", s.color);
+    document.documentElement.style.setProperty("--accent-soft", s.soft);
+  }
+
+  function buildSubjectTabs() {
+    subjectsEl.innerHTML = "";
+    Object.keys(SUBJECTS).forEach(key => {
+      const btn = document.createElement("button");
+      btn.className = "subject-btn" + (key === currentSubject ? " active" : "");
+      btn.textContent = SUBJECTS[key].name;
+      btn.onclick = () => {
+        currentSubject = key;
+        save(KEYS.subject, key);
+        applySubjectColor(key);
+        [...subjectsEl.children].forEach(c => c.classList.remove("active"));
+        btn.classList.add("active");
+        // Start a fresh chat when you switch subjects
+        startNewChat();
+      };
+      subjectsEl.appendChild(btn);
+    });
+  }
+
+  /* =======================================================
+     6) CHAT DISPLAY
+     ======================================================= */
+  function currentChat() {
+    return chats.find(c => c.id === currentId);
+  }
+
+  function renderMessages() {
+    const chat = currentChat();
+    messagesEl.innerHTML = "";
+    if (!chat || chat.messages.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.innerHTML = "Ask me anything about <strong>" + SUBJECTS[currentSubject].name +
+        "</strong>!<br>I'm here to help you understand.";
+      messagesEl.appendChild(empty);
+      return;
+    }
+    chat.messages.forEach(m => addBubble(m.role, m.content, false));
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function addBubble(role, text, scroll = true) {
+    const div = document.createElement("div");
+    div.className = "bubble " + (role === "user" ? "user" : "bot");
+    div.textContent = text;
+    messagesEl.appendChild(div);
+    if (scroll) messagesEl.scrollTop = messagesEl.scrollHeight;
+    return div;
+  }
+
+  /* =======================================================
+     7) SAVED CHATS LIST
+     ======================================================= */
+  function renderChatList() {
+    chatListEl.innerHTML = "";
+    if (chats.length === 0) {
+      chatListEl.innerHTML = "<div class='empty' style='font-size:13px'>No saved chats yet.</div>";
+      return;
+    }
+    // newest first
+    [...chats].sort((a, b) => b.updated - a.updated).forEach(chat => {
+      const item = document.createElement("div");
+      item.className = "chat-item" + (chat.id === currentId ? " active" : "");
+
+      const left = document.createElement("div");
+      left.style.cssText = "display:flex;align-items:center;gap:6px;overflow:hidden;flex:1";
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = SUBJECTS[chat.subject]?.name.split(" ")[0] || "?";
+      const title = document.createElement("span");
+      title.className = "title";
+      title.textContent = chat.title || "New chat";
+      left.appendChild(tag); left.appendChild(title);
+
+      const del = document.createElement("button");
+      del.className = "del";
+      del.textContent = "×";
+      del.title = "Delete this chat";
+      del.onclick = (e) => {
+        e.stopPropagation();
+        if (confirm("Delete this chat?")) {
+          chats = chats.filter(c => c.id !== chat.id);
+          save(KEYS.chats, chats);
+          if (currentId === chat.id) startNewChat();
+          renderChatList();
+        }
+      };
+
+      item.appendChild(left);
+      item.appendChild(del);
+      item.onclick = () => openChat(chat.id);
+      chatListEl.appendChild(item);
+    });
+  }
+
+  function startNewChat() {
+    currentId = null;
+    renderMessages();
+    renderChatList();
+  }
+
+  function openChat(id) {
+    const chat = chats.find(c => c.id === id);
+    if (!chat) return;
+    currentId = id;
+    currentSubject = chat.subject;
+    applySubjectColor(currentSubject);
+    save(KEYS.subject, currentSubject);
+    buildSubjectTabs();
+    renderMessages();
+    renderChatList();
+  }
+
+  function makeTitle(text) {
+    const t = text.trim().replace(/\s+/g, " ");
+    return t.length > 38 ? t.slice(0, 38) + "…" : t;
+  }
+
+  /* =======================================================
+     8) ASKING THE AI  (the main action!)
+     ======================================================= */
+  async function ask() {
+    const text = inputEl.value.trim();
+    if (!text || generating) return;
+
+    // Make sure a chat exists to save into
+    let chat = currentChat();
+    if (!chat) {
+      chat = { id: Date.now().toString(), subject: currentSubject, title: makeTitle(text), messages: [], updated: Date.now() };
+      chats.push(chat);
+      currentId = chat.id;
+    }
+
+    // Clear the "empty" placeholder if present
+    if (chat.messages.length === 0) messagesEl.innerHTML = "";
+
+    // Save + show the student's message
+    chat.messages.push({ role: "user", content: text });
+    addBubble("user", text);
+    inputEl.value = "";
+    inputEl.style.height = "auto";
+    chat.updated = Date.now();
+    save(KEYS.chats, chats);
+    renderChatList();
+
+    // Get ready to generate
+    generating = true;
+    sendBtn.disabled = true;
+    stopBtn.style.display = "inline-block";
+
+    const botDiv = addBubble("bot", "…");
+    let answer = "";
+
+    try {
+      await ensureEngine();
+      setStatus("ready", "Thinking…");
+
+      // Build the message list: subject "job" + the conversation so far
+      const messages = [
+        { role: "system", content: SUBJECTS[chat.subject].prompt },
+        ...chat.messages
+      ];
+
+      const chunks = await engine.chat.completions.create({
+        messages,
+        temperature: 0.6,   // a little lower = more focused, fewer mistakes
+        max_tokens: 800,     // keep answers from rambling on
+        stream: true
+      });
+
+      botDiv.textContent = "";
+      for await (const chunk of chunks) {
+        const piece = chunk.choices[0]?.delta?.content || "";
+        answer += piece;
+        botDiv.textContent = answer;
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+    } catch (err) {
+      console.error(err);
+      answer = answer || ("Oops! Something went wrong: " + (err?.message || err) +
+        "\n\nTry picking a smaller model at the top, or refresh the page.");
+      botDiv.textContent = answer;
+      setStatus("error", "Error — see message");
+    }
+
+    // Save the AI's answer
+    chat.messages.push({ role: "assistant", content: answer });
+    chat.updated = Date.now();
+    save(KEYS.chats, chats);
+
+    generating = false;
+    sendBtn.disabled = false;
+    stopBtn.style.display = "none";
+    if (statusEl.classList.contains("error") === false) setStatus("ready", "Ready");
+  }
+
+  function stopGenerating() {
+    if (engine && generating) {
+      try { engine.interruptGenerate(); } catch (e) {}
+    }
+  }
+
+  /* =======================================================
+     9) NOTEPAD  — auto-saves as you type
+     ======================================================= */
+  notepadEl.value = load(KEYS.notepad, "");
+  let noteTimer = null;
+  notepadEl.addEventListener("input", () => {
+    $("noteSaved").textContent = "saving…";
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(() => {
+      save(KEYS.notepad, notepadEl.value);
+      $("noteSaved").textContent = "saved";
+    }, 400);
+  });
+
+  /* =======================================================
+     10) HOOK UP BUTTONS + START
+     ======================================================= */
+  sendBtn.onclick = ask;
+  stopBtn.onclick = stopGenerating;
+  $("newChatBtn").onclick = startNewChat;
+  modelPicker.onchange = () => { save(KEYS.model, modelPicker.value); };
+
+  // Press Enter to send, Shift+Enter for a new line
+  inputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      ask();
+    }
+  });
+  // Auto-grow the text box
+  inputEl.addEventListener("input", () => {
+    inputEl.style.height = "auto";
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + "px";
+  });
+
+  // ---- Boot the app ----
+  function start() {
+    // Build the whole interface FIRST, so the subject buttons and the notepad
+    // always show up — even before the internet or the AI is ready.
+    setupModelPicker();
+    applySubjectColor(currentSubject);
+    buildSubjectTabs();
+    renderMessages();
+    renderChatList();
+
+    // The AI answers need a browser feature called WebGPU (Chrome or Edge on a
+    // laptop/desktop). The buttons and notepad still work without it.
+    if (!("gpu" in navigator)) {
+      $("gpuWarn").style.display = "block";
+      setStatus("error", "AI needs Chrome or Edge");
+    } else {
+      setStatus("", "Ready when you are — ask a question!");
+    }
+    // The AI model itself downloads the first time you ask a question.
+  }
+
+  // Run start() even if something above this point had an error.
+  try { start(); }
+  catch (e) {
+    console.error(e);
+    setStatus("error", "Something went wrong — try refreshing");
+  }
+</script>
+</body>
+</html>
