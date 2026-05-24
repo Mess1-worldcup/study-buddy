@@ -4,6 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Study Buddy — Your AI Tutor</title>
+<!-- Fun "video game" fonts (loads from the internet; falls back to normal fonts if offline) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* =========================================================
      STUDY BUDDY - AI TUTOR
@@ -13,15 +17,20 @@
      ========================================================= */
 
   :root {
-    --accent: #2563eb;        /* changes color based on the subject */
-    --accent-soft: #dbeafe;
-    --bg: #f4f6fb;
-    --panel: #ffffff;
-    --text: #1f2937;
-    --muted: #6b7280;
-    --border: #e5e7eb;
+    /* ARCADE / VIDEO-GAME THEME (dark with neon glow) */
+    --accent: #38bdf8;        /* changes color based on the subject */
+    --accent-soft: #0e2a3a;
+    --bg: #0b0e1f;            /* deep space background */
+    --panel: #161a32;        /* dark panels */
+    --panel-2: #1f2547;      /* lighter dark for bubbles/inputs */
+    --text: #eef1ff;
+    --muted: #9aa3c7;
+    --border: #2c3361;
     --radius: 16px;
-    --shadow: 0 6px 20px rgba(0,0,0,0.06);
+    --shadow: 0 6px 22px rgba(0,0,0,0.45);
+    --glow: 0 0 14px;        /* used like: box-shadow: var(--glow) var(--accent); */
+    --font-display: "Press Start 2P", "Fredoka", system-ui, sans-serif;
+    --font-body: "Fredoka", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
 
   * { box-sizing: border-box; }
@@ -325,13 +334,122 @@
     .side-col { width: 100%; flex: none; }
     .chat-col { min-height: 60vh; }
   }
+
+  /* =========================================================
+     ARCADE THEME ADD-ONS  (video-game look + animations)
+     These rules come LAST, so they win and re-skin the app.
+     ========================================================= */
+
+  body { font-family: var(--font-body); }
+
+  /* Twinkly outer-space background */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,.7), transparent),
+      radial-gradient(2px 2px at 70% 60%, rgba(255,255,255,.5), transparent),
+      radial-gradient(1.5px 1.5px at 40% 80%, rgba(255,255,255,.6), transparent),
+      radial-gradient(1.5px 1.5px at 85% 25%, rgba(255,255,255,.5), transparent),
+      radial-gradient(1200px 600px at 50% -10%, rgba(56,189,248,.10), transparent),
+      var(--bg);
+    animation: twinkle 5s ease-in-out infinite alternate;
+  }
+  @keyframes twinkle { from { opacity: .75; } to { opacity: 1; } }
+
+  /* Header + pixel-font title */
+  header { border-bottom: 2px solid var(--accent); box-shadow: 0 4px 18px rgba(0,0,0,.4); }
+  header h1 {
+    font-family: var(--font-display);
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: var(--accent);
+    text-shadow: 0 0 10px var(--accent);
+  }
+  .logo-dot { box-shadow: var(--glow) var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); opacity:1; } 50% { transform: scale(1.35); opacity:.6; } }
+
+  /* Dropdown */
+  select { background: var(--panel-2); color: var(--text); border-color: var(--border); }
+  select:focus { outline: 2px solid var(--accent); }
+
+  /* Subject buttons = bouncy arcade buttons */
+  .subject-btn {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 2px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 700;
+    transition: transform .12s ease, box-shadow .15s ease, background .15s ease;
+  }
+  .subject-btn:hover { transform: translateY(-2px) scale(1.04); border-color: var(--accent); box-shadow: var(--glow) var(--accent); }
+  .subject-btn:active { transform: translateY(1px) scale(.98); }
+  .subject-btn.active { background: var(--accent); color: #08111e; border-color: var(--accent); box-shadow: var(--glow) var(--accent); }
+
+  /* Chat bubbles pop in */
+  .bubble { animation: popIn .25s ease-out; }
+  @keyframes popIn { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
+  .bubble.user { background: var(--accent); color: #08111e; font-weight: 600; box-shadow: var(--glow) var(--accent); }
+  .bubble.bot { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  .bubble.system-note { background: var(--accent-soft); color: var(--accent); }
+
+  /* Inputs */
+  .composer textarea, #notepad { background: var(--panel-2); color: var(--text); border-color: var(--border); }
+  textarea::placeholder { color: var(--muted); }
+  .composer textarea:focus { outline: 2px solid var(--accent); border-color: var(--accent); box-shadow: var(--glow) var(--accent); }
+
+  /* Buttons */
+  .btn-primary {
+    background: var(--accent); color: #08111e; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .5px;
+    box-shadow: var(--glow) var(--accent);
+    transition: transform .12s ease, box-shadow .15s ease;
+  }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-2px) scale(1.04); }
+  .btn-primary:active:not(:disabled) { transform: translateY(1px) scale(.97); }
+  .btn-ghost { background: var(--panel-2); color: var(--text); border-color: var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); box-shadow: var(--glow) var(--accent); }
+
+  /* Saved chats */
+  .chat-item:hover { background: var(--panel-2); }
+  .chat-item.active { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+  .chat-item .tag { background: var(--panel-2); color: var(--muted); border-color: var(--border); }
+
+  /* Game-style loading bar */
+  #loadWrap { background: var(--panel); border-bottom: 1px solid var(--accent); color: var(--accent); }
+  .bar { background: #0a0d1c; border: 1px solid var(--border); }
+  .bar > div {
+    background: linear-gradient(90deg, var(--accent), #ffffff, var(--accent));
+    background-size: 200% 100%;
+    box-shadow: var(--glow) var(--accent);
+    animation: slide 1s linear infinite;
+  }
+  @keyframes slide { from { background-position: 200% 0; } to { background-position: 0 0; } }
+
+  /* WebGPU help box */
+  #gpuWarn { background: var(--panel); color: var(--text); border: 1px solid var(--border); }
+  #gpuWarn h2 { color: var(--accent); }
+  #gpuWarn code { background: var(--panel-2); color: var(--accent); }
+
+  /* Neon scrollbars */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* Respect people who prefer less motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, body::before { animation: none !important; }
+  }
 </style>
 </head>
 <body>
 
   <header>
     <h1><span class="logo-dot"></span>Study Buddy</h1>
-    <div style="font-size:13px;color:var(--muted)">Your private AI tutor</div>
+    <div style="font-size:13px;color:var(--muted)">Level up your brain! 🚀</div>
     <div class="status" id="status">
       <select id="modelPicker" title="Pick how smart vs. fast the AI is"></select>
       <span class="dot"></span><span id="statusText">Getting ready…</span>
@@ -411,31 +529,33 @@
   // Shared rules added to EVERY subject. Clear, simple instructions like these
   // make a big difference for a small AI model.
   const BASE_RULES =
-    " RULES: Talk to an 11-12 year old 6th grader. Use simple, everyday words and a warm, encouraging tone. " +
+    " STYLE: You are LIVELY, upbeat, and fun — like an energetic coach who loves cheering the student on! " +
+    "Use a few fun emojis to keep it playful (such as 🎉 ✅ 💡 🤔 🚀 ⭐ 🔥), about one or two per message — enough to be fun, never so many it gets hard to read. " +
+    "RULES: Talk to an 11-12 year old 6th grader. Use simple, everyday words and a warm, encouraging tone. " +
     "Keep answers SHORT — usually 2 to 5 sentences, or a few short numbered steps. Do not write long walls of text. " +
     "Teach one small step at a time and use a real-life example when it helps. " +
     "When it is homework or a problem to solve, do NOT just give the final answer — show the first step, then ask one short question so the student tries the next step. " +
     "If the student seems confused or says 'I don't get it', slow down and explain it an easier way with a simple example. " +
-    "Always praise effort. Stay safe and age-appropriate. If a question is not about this subject, gently steer back, and if it is unsafe or not school-related, kindly say you can only help with schoolwork.";
+    "Always celebrate effort and wins. Stay safe and age-appropriate. If a question is not about this subject, gently steer back, and if it is unsafe or not school-related, kindly say you can only help with schoolwork.";
 
   const SUBJECTS = {
     math: {
       name: "Math",
-      color: "#2563eb", soft: "#dbeafe",
+      icon: "🔢", color: "#38bdf8", soft: "#0e2a3a",
       prompt: "You are Study Buddy, a friendly, patient MATH tutor. " +
         "Help with arithmetic, fractions, decimals, ratios, basic algebra, geometry, and word problems. " +
         "Show your steps clearly, line by line, and check the student's thinking with a quick question." + BASE_RULES
     },
     ela: {
       name: "ELA (Reading & Writing)",
-      color: "#7c3aed", soft: "#ede9fe",
+      icon: "📖", color: "#c084fc", soft: "#241733",
       prompt: "You are Study Buddy, a friendly ENGLISH LANGUAGE ARTS tutor. " +
         "Help with reading comprehension, writing, grammar, spelling, and vocabulary. " +
         "For writing, give one or two helpful tips and ask a guiding question instead of writing it for the student — help them write it themselves." + BASE_RULES
     },
     science: {
       name: "Science",
-      color: "#059669", soft: "#d1fae5",
+      icon: "🔬", color: "#34d399", soft: "#0f2e22",
       prompt: "You are Study Buddy, a fun, curious SCIENCE tutor. " +
         "Help with life science, earth science, and physical science. " +
         "Explain ideas with a simple example or comparison, and sometimes add a short fun fact. Encourage the student to ask 'why' and 'how'. " +
@@ -443,7 +563,7 @@
     },
     social: {
       name: "Social Studies",
-      color: "#ea580c", soft: "#ffedd5",
+      icon: "🌍", color: "#fb923c", soft: "#33210f",
       prompt: "You are Study Buddy, a friendly SOCIAL STUDIES tutor. " +
         "Help with history, geography, civics, and cultures using short, interesting explanations or mini-stories. " +
         "On topics where people disagree, stay balanced and fair and explain the different viewpoints." + BASE_RULES
@@ -560,7 +680,7 @@
     Object.keys(SUBJECTS).forEach(key => {
       const btn = document.createElement("button");
       btn.className = "subject-btn" + (key === currentSubject ? " active" : "");
-      btn.textContent = SUBJECTS[key].name;
+      btn.textContent = (SUBJECTS[key].icon ? SUBJECTS[key].icon + " " : "") + SUBJECTS[key].name;
       btn.onclick = () => {
         currentSubject = key;
         save(KEYS.subject, key);
